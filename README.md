@@ -6,3 +6,7 @@
  + homework_accomplished是本人完成的代码测验，基本都是100%通过（但这并不意味着0差错）。  
  
 ## 2.课程目录
+1. [Course 1: Classification and Vector Spaces in NLP](https://www.coursera.org/learn/classification-vector-spaces-in-nlp "NLP中的分类和向量空间")
+2. [Course 2: Probabilistic Models in NLP](https://www.coursera.org/learn/probabilistic-models-in-nlp "NLP中的概率模型")
+3. [Course 3: Sequence Models in NLP](https://www.coursera.org/learn/sequence-models-in-nlp "NLP中的序列模型")
+4. [Course 4: Attention Models in NLP](https://www.coursera.org/learn/attention-models-in-nlp "NLP中的注意力模型")
