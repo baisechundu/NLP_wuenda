@@ -1,9 +1,6 @@
 import numpy as np
-
 import trax
-from trax import layers as tl
 from trax.fastmath import numpy as fastnp
-from trax.supervised import training
 
 VOCAB_FILE = 'ende_32k.subword'
 VOCAB_DIR = 'data/'
@@ -90,26 +87,21 @@ def test_input_encoder_fn(input_encoder_fn):
     target = input_encoder_fn
     success = 0
     fails = 0
-    
     input_vocab_size = 10
     d_model = 2
     n_encoder_layers = 6
-    
+
     encoder = target(input_vocab_size, d_model, n_encoder_layers)
-    
-    lstms = "\n".join([f'  LSTM_{d_model}'] * n_encoder_layers)
-
-    expected = f"Serial[\n  Embedding_{input_vocab_size}_{d_model}\n{lstms}\n]"
-
+    lstms = "\n".join(['LSTM_{}'.format(d_model) for _ in range(n_encoder_layers)])
+    expected = "Serial[\n  Embedding_{0}_{1}\n{2}\n]".format(input_vocab_size, d_model, lstms)
     proposed = str(encoder)
-    
     # Test all layers are in the expected sequence
     try:
         assert(proposed.replace(" ", "") == expected.replace(" ", ""))
         success += 1
     except:
         fails += 1
-        print("Wrong model. \nProposed:\n%s" %proposed, "\nExpected:\n%s" %expected)
+        print("Wrong model. \nProposed:\n%s" % proposed, "\nExpected:\n%s" % expected)
     
     # Test the output type
     try:
@@ -122,16 +114,15 @@ def test_input_encoder_fn(input_encoder_fn):
             success += 1
         except:
             fails += 1
-            print('The number of sublayers does not match %s <>' %len(encoder.sublayers), " %s" %(n_encoder_layers + 1))
+            print('The number of sublayers does not match %s <>' % len(encoder.sublayers), 
+            " %s" % (n_encoder_layers + 1))
     except:
         fails += 1
-        print("The enconder is not an object of ", trax.layers.combinators.Serial)
-    
-        
+        print("The enconder is not an object of ", trax.layers.combinators.Serial)     
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
         
@@ -146,8 +137,8 @@ def test_pre_attention_decoder_fn(pre_attention_decoder_fn):
     d_model = 2
     
     decoder = target(mode, target_vocab_size, d_model)
-    
-    expected = f"Serial[\n  ShiftRight(1)\n  Embedding_{target_vocab_size}_{d_model}\n  LSTM_{d_model}\n]"
+
+    expected = "Serial[\n ShiftRight(1)\n Embedding_{0}_{1}\n LSTM_{2}\n]".format(target_vocab_size, d_model, d_model)
 
     proposed = str(decoder)
     
@@ -157,7 +148,7 @@ def test_pre_attention_decoder_fn(pre_attention_decoder_fn):
         success += 1
     except:
         fails += 1
-        print("Wrong model. \nProposed:\n%s" %proposed, "\nExpected:\n%s" %expected)
+        print("Wrong model. \nProposed:\n%s" % proposed, "\nExpected:\n%s" % expected)
     
     # Test the output type
     try:
@@ -170,16 +161,14 @@ def test_pre_attention_decoder_fn(pre_attention_decoder_fn):
             success += 1
         except:
             fails += 1
-            print('The number of sublayers does not match %s <>' %len(decoder.sublayers), " %s" %3)
+            print('The number of sublayers does not match %s <>' % len(decoder.sublayers), " %s" % 3)
     except:
         fails += 1
-        print("The enconder is not an object of ", trax.layers.combinators.Serial)
-    
-        
+        print("The enconder is not an object of ", trax.layers.combinators.Serial)    
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
         
@@ -195,7 +184,7 @@ def test_prepare_attention_input(prepare_attention_input):
                [[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 0, 0]]])
     dec_act = fastnp.array([[[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0]], 
                [[2, 0, 2, 0], [0, 2, 0, 2], [0, 0, 0, 0]]])
-    inputs =  fastnp.array([[1, 2, 3], [1, 4, 0]])
+    inputs = fastnp.array([[1, 2, 3], [1, 4, 0]])
     
     exp_mask = fastnp.array([[[[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]]], 
                              [[[1., 1., 0.], [1., 1., 0.], [1., 1., 0.]]]])
@@ -227,7 +216,7 @@ def test_prepare_attention_input(prepare_attention_input):
         success += 1
     except:
         fails += 1
-        print("Mask does not match expected tensor. \nExpected:\n%s" %exp_mask, "\nOutput:\n%s" %mask)
+        print("Mask does not match expected tensor. \nExpected:\n%s" % exp_mask, "\nOutput:\n%s" % mask)
     
     # Test the output type
     try:
@@ -238,12 +227,12 @@ def test_prepare_attention_input(prepare_attention_input):
         success += 1
     except:
         fails += 1
-        print("One of the output object are not of type ", jax.interpreters.xla.DeviceArray)
+        print("One of the output object are not of type ", "jax.interpreters.xla.DeviceArray")
         
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
         
@@ -251,19 +240,29 @@ def test_prepare_attention_input(prepare_attention_input):
 def test_NMTAttn(NMTAttn):
     test_cases = [
                 {
-                    "name":"simple_test_check",
-                    "expected":"Serial_in2_out2[\n  Select[0,1,0,1]_in2_out4\n  Parallel_in2_out2[\n    Serial[\n      Embedding_33300_1024\n      LSTM_1024\n      LSTM_1024\n    ]\n    Serial[\n      ShiftRight(1)\n      Embedding_33300_1024\n      LSTM_1024\n    ]\n  ]\n  PrepareAttentionInput_in3_out4\n  Serial_in4_out2[\n    Branch_in4_out3[\n      None\n      Serial_in4_out2[\n        Parallel_in3_out3[\n          Dense_1024\n          Dense_1024\n          Dense_1024\n        ]\n        PureAttention_in4_out2\n        Dense_1024\n      ]\n    ]\n    Add_in2\n  ]\n  Select[0,2]_in3_out2\n  LSTM_1024\n  LSTM_1024\n  Dense_33300\n  LogSoftmax\n]",
-                    "error":"The NMTAttn is not defined properly."
+                    "name": "simple_test_check",
+                    "expected": "Serial_in2_out2[\n Select[0,1,0,1]_in2_out4\n "
+                                "Parallel_in2_out2[\n Serial[\n Embedding_33300_1024\n "
+                                "LSTM_1024\n LSTM_1024\n]\n Serial[\n ShiftRight(1)\n"
+                                " Embedding_33300_1024\n LSTM_1024\n]\n]\n "
+                                "PrepareAttentionInput_in3_out4\n Serial_in4_out2[\n "
+                                "Branch_in4_out3[\n None\n Serial_in4_out2[\n "
+                                "Parallel_in3_out3[\n Dense_1024\n Dense_1024\n "
+                                "Dense_1024\n]\n PureAttention_in4_out2\n Dense_1024\n]\n]"
+                                "\n Add_in2\n]\n Select[0,2]_in3_out2\n LSTM_1024\n "
+                                "LSTM_1024\n Dense_33300\n LogSoftmax\n]",
+                    "error": "The NMTAttn is not defined properly."
                 },
                 {
-                    "name":"layer_len_check",
-                    "expected":9,
-                    "error":"We found {} layers in your model. It should be 9.\nCheck the LSTM stack before the dense layer"
+                    "name": "layer_len_check",
+                    "expected": 9,
+                    "error": "We found {} layers in your model. It should be 9.\n "
+                             "Check the LSTM stack before the dense layer"
                 },
                 {
-                    "name":"selection_layer_check",
-                    "expected":["Select[0,1,0,1]_in2_out4", "Select[0,2]_in3_out2"],
-                    "error":"Look at your selection layers."
+                    "name": "selection_layer_check",
+                    "expected": ["Select[0,1,0,1]_in2_out4", "Select[0,2]_in3_out2"],
+                    "error": "Look at your selection layers."
                 }
             ]
     
@@ -283,7 +282,7 @@ def test_NMTAttn(NMTAttn):
                     fails += 1
             if test_case['name'] == "selection_layer_check":
                 model = NMTAttn()
-                output = [str(model.sublayers[0]),str(model.sublayers[4])]
+                output = [str(model.sublayers[0]), str(model.sublayers[4])]
                 check_count = 0
                 for i in range(2):
                     if test_case["expected"][i] != output[i]:
@@ -301,7 +300,7 @@ def test_NMTAttn(NMTAttn):
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
 
@@ -328,9 +327,7 @@ def test_train_task(train_task):
     except:
         fails += 1
         print("Wrong loss functions. CrossEntropyLoss_in3 was expected")
-        
-     # Test the optimizer parameter
-    try:
+    try:  # Test the optimizer parameter
         assert(isinstance(target.optimizer, trax.optimizers.adam.Adam))
         success += 1
     except:
@@ -339,7 +336,7 @@ def test_train_task(train_task):
         
     # Test the schedule parameter
     try:
-        assert(isinstance(target._lr_schedule,trax.supervised.lr_schedules._BodyAndTail))
+        assert(isinstance(target._lr_schedule, trax.supervised.lr_schedules._BodyAndTail))
         success += 1
     except:
         fails += 1
@@ -347,7 +344,7 @@ def test_train_task(train_task):
     
     # Test the _n_steps_per_checkpoint parameter
     try:
-        assert(target._n_steps_per_checkpoint==10)
+        assert(target._n_steps_per_checkpoint == 10)
         success += 1
     except:
         fails += 1
@@ -356,12 +353,10 @@ def test_train_task(train_task):
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
 
-
-# UNIT TEST for UNQ_C6
 def test_next_symbol(next_symbol, model):
     target = next_symbol
     the_model = model
@@ -389,19 +384,16 @@ def test_next_symbol(next_symbol, model):
     except:
         fails += 1
         print("Expected output: ", [140, -0.000217437744])
-    
-        
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
 
 # UNIT TEST for UNQ_C7
 def test_sampling_decode(sampling_decode, model):
     target = sampling_decode
-    the_model = model
     success = 0
     fails = 0
     
@@ -426,7 +418,7 @@ def test_sampling_decode(sampling_decode, model):
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
         
 
@@ -435,50 +427,44 @@ def test_rouge1_similarity(rouge1_similarity):
     target = rouge1_similarity
     success = 0
     fails = 0
-    n_samples = 10
-    
     test_cases = [
-        
         {
-            "name":"simple_test_check",
+            "name": "simple_test_check",
             "input": [[1, 2, 3], [1, 2, 3, 4]],
-            "expected":0.8571428571428571,
-            "error":"Expected similarity: 0.8571428571428571"
+            "expected": 0.8571428571428571,
+            "error": "Expected similarity: 0.8571428571428571"
         },
         {
-            "name":"simple_test_check",
-            "input":[[2, 1], [3, 1]],
-            "expected":0.5,
-            "error":"Expected similarity: 0.5"
+            "name": "simple_test_check",
+            "input": [[2, 1], [3, 1]],
+            "expected": 0.5,
+            "error": "Expected similarity: 0.5"
         },
         {
-            "name":"simple_test_check",
-            "input":[[2], [3]],
-            "expected":0,
-            "error":"Expected similarity: 0"
+            "name": "simple_test_check",
+            "input": [[2], [3]],
+            "expected": 0,
+            "error": "Expected similarity: 0"
         },
         {
-            "name":"simple_test_check",
-            "input":[[0] * 100 + [2] * 100, [0] * 100 + [1] * 100],
-            "expected":0.5,
-            "error":"Expected similarity: 0.5"
+            "name": "simple_test_check",
+            "input": [[0] * 100 + [2] * 100, [0] * 100 + [1] * 100],
+            "expected": 0.5,
+            "error": "Expected similarity: 0.5"
         }
     ]
-
     for test_case in test_cases:
-        
         try:
             if test_case['name'] == "simple_test_check":
-                assert abs(test_case["expected"] -target(*test_case['input'])) < 1e-6
+                assert abs(test_case["expected"] - target(*test_case['input'])) < 1e-6
                 success += 1
         except:
             print(test_case['error'])
             fails += 1
-            
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
         
 
@@ -487,27 +473,26 @@ def test_average_overlap(average_overlap):
     target = average_overlap
     success = 0
     fails = 0
-    
     test_cases = [
         
         {
-            "name":"dict_test_check",
+            "name": "dict_test_check",
             "input": [jaccard_similarity, [[1, 2], [3, 4], [1, 2], [3, 5]]],
             "expected":{0: 0.3333333333333333,
                         1: 0.1111111111111111,
                         2: 0.3333333333333333,
                         3: 0.1111111111111111},
-            "error":"Expected output does not match"
+            "error": "Expected output does not match"
         },
         {
-            "name":"dict_test_check",
-            "input":[jaccard_similarity, [[1, 2], [3, 4], [1, 2, 5], [3, 5], [3, 4, 1]]],
+            "name": "dict_test_check",
+            "input": [jaccard_similarity, [[1, 2], [3, 4], [1, 2, 5], [3, 5], [3, 4, 1]]],
             "expected":{0: 0.22916666666666666,
                         1: 0.25,
                         2: 0.2791666666666667,
                         3: 0.20833333333333331,
                         4: 0.3416666666666667},
-            "error":"Expected output does not match"
+            "error": "Expected output does not match"
         }
     ]
     for test_case in test_cases:
@@ -520,11 +505,10 @@ def test_average_overlap(average_overlap):
         except:
             print(test_case['error'])
             fails += 1
-            
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
 
 
@@ -533,28 +517,25 @@ def test_mbr_decode(mbr_decode, model):
     target = mbr_decode
     success = 0
     fails = 0
-    
     TEMPERATURE = 0.0
-    
     test_cases = [
-        
         {
-            "name":"simple_test_check",
+            "name": "simple_test_check",
             "input": "I am hungry",
-            "expected":"Ich bin hungrig.",
-            "error":"Expected output does not match"
+            "expected": "Ich bin hungrig.",
+            "error": "Expected output does not match"
         },
         {
-            "name":"simple_test_check",
-            "input":'Congratulations!',
-            "expected":'Herzlichen Glückwunsch!',
-            "error":"Expected output does not match"
+            "name": "simple_test_check",
+            "input": 'Congratulations!',
+            "expected": 'Herzlichen Glückwunsch!',
+            "error": "Expected output does not match"
         },
         {
-            "name":"simple_test_check",
-            "input":'You have completed the assignment!',
-            "expected":'Sie haben die Abtretung abgeschlossen!',
-            "error":"Expected output does not match"
+            "name": "simple_test_check",
+            "input": 'You have completed the assignment!',
+            "expected": 'Sie haben die Abtretung abgeschlossen!',
+            "error": "Expected output does not match"
         }
     ]
     for test_case in test_cases:
@@ -572,12 +553,12 @@ def test_mbr_decode(mbr_decode, model):
             
     # Test that function return the most likely translation
     TEMPERATURE = 0.5
-    test_case =  test_cases[0]
+    test_case = test_cases[0]
     try:
         result = target(test_case['input'], 4, weighted_avg_overlap, jaccard_similarity, 
                                 model, TEMPERATURE, vocab_file=VOCAB_FILE, vocab_dir=VOCAB_DIR)   
 
-        assert  max(result[2], key=result[2].get) == result[1]
+        assert max(result[2], key=result[2].get) == result[1]
         success += 1
     except:
         print('Use max function to select max_index')
@@ -586,5 +567,5 @@ def test_mbr_decode(mbr_decode, model):
     if fails == 0:
         print("\033[92m All tests passed")
     else:
-        print('\033[92m', success," Tests passed")
+        print('\033[92m', success, " Tests passed")
         print('\033[91m', fails, " Tests failed")
