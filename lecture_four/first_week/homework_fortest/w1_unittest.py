@@ -1,6 +1,8 @@
 import numpy as np
 import trax
+from trax import layers as tl
 from trax.fastmath import numpy as fastnp
+from trax.supervised import training
 
 VOCAB_FILE = 'ende_32k.subword'
 VOCAB_DIR = 'data/'
@@ -227,7 +229,7 @@ def test_prepare_attention_input(prepare_attention_input):
         success += 1
     except:
         fails += 1
-        print("One of the output object are not of type ", "jax.interpreters.xla.DeviceArray")
+        print("One of the output object are not of type ", jax.interpreters.xla.DeviceArray)
         
     if fails == 0:
         print("\033[92m All tests passed")
@@ -394,6 +396,7 @@ def test_next_symbol(next_symbol, model):
 # UNIT TEST for UNQ_C7
 def test_sampling_decode(sampling_decode, model):
     target = sampling_decode
+    the_model = model
     success = 0
     fails = 0
     
@@ -427,6 +430,7 @@ def test_rouge1_similarity(rouge1_similarity):
     target = rouge1_similarity
     success = 0
     fails = 0
+    n_samples = 10
     test_cases = [
         {
             "name": "simple_test_check",
